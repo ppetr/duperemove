@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include <sys/vfs.h>
 #include <sys/ioctl.h>
+#include <btrfs/ctree.h>
 
 #include <errno.h>
 
@@ -115,6 +116,19 @@ static void print_btrfs_same_info(struct dedupe_ctxt *ctxt)
 			(unsigned long long)info->dest_offset,
 			(unsigned long long)info->bytes_deduped, info->status);
 	}
+}
+
+static void print_btrfs_defrag_info(const struct filerec *file,
+                                    const struct btrfs_ioctl_defrag_range_args *args)
+{
+	dprintf("(defrag) btrfs defrag info: ioctl_file: \"%s\"\n",
+		file ? file->filename : "(null)");
+	dprintf("(defrag) logical_offset: %llu, length: %llu, flags: 0x%llx, compression: %lu, extent_threshold: %lu\n",
+		(unsigned long long)args->start,
+		(unsigned long long)args->len,
+		(unsigned long long)args->flags,
+                (unsigned long)args->compress_type,
+                (unsigned long)args->extent_thresh);
 }
 
 static void clear_lists(struct dedupe_ctxt *ctxt)
@@ -314,10 +328,31 @@ static void process_dedupes(struct dedupe_ctxt *ctxt,
 int dedupe_extents(struct dedupe_ctxt *ctxt)
 {
 	int ret = 0;
+        struct btrfs_ioctl_defrag_range_args defrag_range;
+
+	memset(&defrag_range, 0, sizeof(defrag_range));
+	if (ctxt->defrag != NULL) {
+            // Adapted from https://github.com/josefbacik/btrfs-progs/blob/56dd9e2b08e07a7521cddfcbeb44ba7fe1290f3f/cmds-filesystem.c#L765
+	    defrag_range.extent_thresh = ctxt->defrag->extent_thresh;
+	    if ((defrag_range.compress_type = ctxt->defrag->compress_type) != BTRFS_COMPRESS_NONE) {
+	    	defrag_range.flags |= BTRFS_DEFRAG_RANGE_COMPRESS;
+            }
+	}
 
 	while (!list_empty(&ctxt->queued)) {
 		/* Convert the queued list into an actual request */
 		populate_dedupe_request(ctxt, ctxt->same);
+
+		if (ctxt->defrag != NULL) {
+		    defrag_range.start = ctxt->same->src_offset;
+		    defrag_range.len = ctxt->same->src_length;
+                    print_btrfs_defrag_info(ctxt->ioctl_file, &defrag_range);
+		    ret = ioctl(ctxt->ioctl_file->fd, BTRFS_IOC_DEFRAG_RANGE, &defrag_range);
+		    if (ret < 0) {
+			ret = errno;
+			fprintf(stderr, "BTRFS_IOC_DEFRAG_RANGE returned error: (%d) %s; continuing\n", ret, strerror(ret));
+		    }
+		}
 
 retry:
 		ret = ioctl(ctxt->ioctl_file->fd, FIDEDUPERANGE, ctxt->same);

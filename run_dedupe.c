@@ -51,6 +51,12 @@ static volatile unsigned long long curr_dedupe_pass;
 static unsigned int leading_spaces;
 static bool whole_file_dedup;
 
+// TODO: Parse this structure from flags.
+static const struct defrag_ctxt global_defrag_ctx = {
+    .extent_thresh = 32 << 20,  // 20MB
+    .compress_type = BTRFS_COMPRESS_ZSTD,
+};
+
 void print_dupes_table(struct results_tree *res, bool whole_file)
 {
 	struct rb_root *root = &res->root;
@@ -372,6 +378,7 @@ static int dedupe_extent_list(struct dupe_extents *dext, uint64_t *fiemap_bytes,
 				ret = ENOMEM;
 				goto out;
 			}
+                        ctxt->defrag = &global_defrag_ctx;
 
 			/*
 			 * If we just picked the target, it got added
@@ -655,6 +662,7 @@ int fdupes_dedupe(void)
 				ret = ENOMEM;
 				goto out;
 			}
+                        ctxt->defrag = &global_defrag_ctx;
 			continue;
 		}
 

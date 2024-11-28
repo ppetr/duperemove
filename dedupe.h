@@ -17,10 +17,17 @@
 #ifndef	__DEDUPE_H__
 #define	__DEDUPE_H__
 
+#include <btrfs/ctree.h>
+
 #include "list.h"
 #include "ioctl.h"
 
 #define MAX_DEDUPES_PER_IOCTL	120
+
+struct defrag_ctxt {
+	uint64_t extent_thresh;
+	btrfs_compression_type compress_type;
+};
 
 struct dedupe_ctxt {
 
@@ -52,6 +59,8 @@ struct dedupe_ctxt {
 	struct list_head	completed;
 
 	struct file_dedupe_range *same;
+
+        const struct defrag_ctxt *defrag;
 };
 
 struct dedupe_ctxt *new_dedupe_ctxt(unsigned int max_extents, uint64_t loff,

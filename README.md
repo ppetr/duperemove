@@ -26,11 +26,12 @@ The latest stable code can be found in [the release page](https://github.com/mar
 - Linux kernel 3.13 or later
 - GNU make
 - pkg-config
-- glib2
-- sqlite3
+- glib2 (libglib2.0-dev on Debian)
+- sqlite3 (libsqlite3-dev on Debian)
 - libxxhash 0.8.0 or later (libxxhash-dev on Debian)
 - util-linux (for libuuid, libmount, libblkid)
 - libbsd (libbsd-dev on Debian)
+- Btrfs (libbtrfs-dev on Debian)
 
 Then to build Duperemove run `make`.
 
