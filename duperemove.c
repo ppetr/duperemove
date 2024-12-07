@@ -204,6 +204,7 @@ enum {
 	QUIET_OPTION,
 	EXCLUDE_OPTION,
 	BATCH_SIZE_OPTION,
+        BTRFS_DEFRAG_OPTION,
 };
 
 static int process_fdupes()
@@ -301,22 +302,23 @@ static int parse_options(int argc, char **argv, int *filelist_idx)
 	bool update_hashes = false;
 
 	static struct option long_ops[] = {
-		{ "debug", 0, NULL, DEBUG_OPTION },
-		{ "help", 0, NULL, HELP_OPTION },
-		{ "version", 0, NULL, VERSION_OPTION },
-		{ "write-hashes", 1, NULL, WRITE_HASHES_OPTION },
-		{ "read-hashes", 1, NULL, READ_HASHES_OPTION },
-		{ "hashfile", 1, NULL, HASHFILE_OPTION },
-		{ "io-threads", 1, NULL, IO_THREADS_OPTION },
-		{ "hash-threads", 1, NULL, IO_THREADS_OPTION },
-		{ "cpu-threads", 1, NULL, CPU_THREADS_OPTION },
-		{ "skip-zeroes", 0, NULL, SKIP_ZEROES_OPTION },
-		{ "fdupes", 0, NULL, FDUPES_OPTION },
-		{ "dedupe-options=", 1, NULL, DEDUPE_OPTS_OPTION },
-		{ "quiet", 0, NULL, QUIET_OPTION },
-		{ "exclude", 1, NULL, EXCLUDE_OPTION },
-		{ "batchsize", 1, NULL, BATCH_SIZE_OPTION },
-		{ NULL, 0, NULL, 0}
+		{ "debug", no_argument, NULL, DEBUG_OPTION },
+		{ "help", no_argument, NULL, HELP_OPTION },
+		{ "version", no_argument, NULL, VERSION_OPTION },
+		{ "write-hashes", required_argument, NULL, WRITE_HASHES_OPTION },
+		{ "read-hashes", required_argument, NULL, READ_HASHES_OPTION },
+		{ "hashfile", required_argument, NULL, HASHFILE_OPTION },
+		{ "io-threads", required_argument, NULL, IO_THREADS_OPTION },
+		{ "hash-threads", required_argument, NULL, IO_THREADS_OPTION },
+		{ "cpu-threads", required_argument, NULL, CPU_THREADS_OPTION },
+		{ "skip-zeroes", no_argument, NULL, SKIP_ZEROES_OPTION },
+		{ "fdupes", no_argument, NULL, FDUPES_OPTION },
+		{ "dedupe-options=", required_argument, NULL, DEDUPE_OPTS_OPTION },
+		{ "quiet", no_argument, NULL, QUIET_OPTION },
+		{ "exclude", required_argument, NULL, EXCLUDE_OPTION },
+		{ "batchsize", required_argument, NULL, BATCH_SIZE_OPTION },
+		{ "btrfs-defrag", required_argument, NULL, BTRFS_DEFRAG_OPTION },
+		{ NULL, no_argument, NULL, 0}
 	};
 
 	if (argc < 2) {
@@ -411,6 +413,18 @@ static int parse_options(int argc, char **argv, int *filelist_idx)
 		case 'B':
 			options.batch_size = parse_size(optarg);
 			break;
+                case BTRFS_DEFRAG_OPTION:
+                        if (strcmp(optarg, "none") == 0) {
+                        } else if (strcmp(optarg, "source") == 0) {
+                            options.btrfs.defrag = OPTION_BTRFS_DEFRAG_SOURCE;
+                        } else {
+                                eprintf("Error: --btrfs-defrag must be 'none' or "
+                                        "'source' (to defragment the source "
+                                        "extent while deduplicating); %s found\n",
+                                        optarg);
+				return EINVAL;
+                        }
+                        break;
 		case HELP_OPTION:
 			help();
 			break;

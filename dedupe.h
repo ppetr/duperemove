@@ -24,10 +24,9 @@
 
 #define MAX_DEDUPES_PER_IOCTL	120
 
-struct defrag_ctxt {
-	uint64_t extent_thresh;
-	btrfs_compression_type compress_type;
-};
+// 32MB, the standard default.
+#define BTRFS_DEFRAG_EXTENT_THRESH (32 << 20)
+#define BTRFS_DEFRAG_COMPRESS_TYPE BTRFS_COMPRESS_ZSTD
 
 struct dedupe_ctxt {
 
@@ -59,8 +58,6 @@ struct dedupe_ctxt {
 	struct list_head	completed;
 
 	struct file_dedupe_range *same;
-
-        const struct defrag_ctxt *defrag;
 };
 
 struct dedupe_ctxt *new_dedupe_ctxt(unsigned int max_extents, uint64_t loff,

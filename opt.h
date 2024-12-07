@@ -16,6 +16,18 @@
 
 #include <stdbool.h>
 
+enum OptionBtrfsDefrag {
+        OPTION_BTRFS_DEFRAG_NONE = 0,
+        OPTION_BTRFS_DEFRAG_SOURCE = 1,
+        // TODO: Add another value for defragmenting every hashed file.
+};
+
+struct btrfs_options {
+        enum OptionBtrfsDefrag defrag;
+        // TODO: Add options for a extent size threshold and for a compression
+        // type.
+};
+
 struct options {
 	int run_dedupe;
 	bool recurse_dirs : 1;
@@ -28,6 +40,7 @@ struct options {
 	unsigned int batch_size;
 	bool fdupes_mode : 1;
 	char *hashfile;
+        struct btrfs_options btrfs;
 };
 
 extern struct options options;

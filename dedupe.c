@@ -29,6 +29,7 @@
 #include "list.h"
 #include "filerec.h"
 #include "dedupe.h"
+#include "opt.h"
 #include "debug.h"
 
 /*
@@ -331,10 +332,11 @@ int dedupe_extents(struct dedupe_ctxt *ctxt)
         struct btrfs_ioctl_defrag_range_args defrag_range;
 
 	memset(&defrag_range, 0, sizeof(defrag_range));
-	if (ctxt->defrag != NULL) {
+	if (options.btrfs.defrag == OPTION_BTRFS_DEFRAG_SOURCE) {
             // Adapted from https://github.com/josefbacik/btrfs-progs/blob/56dd9e2b08e07a7521cddfcbeb44ba7fe1290f3f/cmds-filesystem.c#L765
-	    defrag_range.extent_thresh = ctxt->defrag->extent_thresh;
-	    if ((defrag_range.compress_type = ctxt->defrag->compress_type) != BTRFS_COMPRESS_NONE) {
+	    defrag_range.extent_thresh = BTRFS_DEFRAG_EXTENT_THRESH;
+	    if ((defrag_range.compress_type = BTRFS_DEFRAG_COMPRESS_TYPE)
+                    != BTRFS_COMPRESS_NONE) {
 	    	defrag_range.flags |= BTRFS_DEFRAG_RANGE_COMPRESS;
             }
 	}
@@ -343,7 +345,7 @@ int dedupe_extents(struct dedupe_ctxt *ctxt)
 		/* Convert the queued list into an actual request */
 		populate_dedupe_request(ctxt, ctxt->same);
 
-		if (ctxt->defrag != NULL) {
+                if (options.btrfs.defrag == OPTION_BTRFS_DEFRAG_SOURCE) {
 		    defrag_range.start = ctxt->same->src_offset;
 		    defrag_range.len = ctxt->same->src_length;
                     print_btrfs_defrag_info(ctxt->ioctl_file, &defrag_range);
